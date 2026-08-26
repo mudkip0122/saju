@@ -74,6 +74,11 @@ export function ResultSection({
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
             <span aria-hidden>{result.starSign.emoji}</span> {result.starSign.label}
           </span>
+          {unknownTime && (
+            <span className="rounded-full border border-amber-300/30 bg-amber-400/15 px-3 py-1 text-xs font-medium text-amber-200">
+              ⚡ 태어난 시간 없이 간략 분석
+            </span>
+          )}
         </div>
 
         <h2

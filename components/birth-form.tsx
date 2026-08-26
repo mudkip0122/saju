@@ -66,7 +66,7 @@ export function BirthForm({
                 className={cn(
                   fieldBase,
                   errors.birthDate
-                    ? 'border-destructive/60 bg-destructive/5'
+                    ? 'border-destructive/60 bg-destructive/5 ring-destructive/20 ring-4'
                     : 'border-input hover:border-primary/45',
                 )}
               >
@@ -74,8 +74,8 @@ export function BirthForm({
                   id="birth-date"
                   type="date"
                   value={birthDate}
-                  max="2026-12-31"
-                  min="1920-01-01"
+                  max={new Date().toISOString().split('T')[0]}
+                  min="1900-01-01"
                   aria-invalid={Boolean(errors.birthDate)}
                   aria-describedby={errors.birthDate ? 'birth-date-error' : 'birth-date-hint'}
                   onChange={(event) => onBirthDateChange(event.target.value)}
@@ -100,6 +100,7 @@ export function BirthForm({
               {errors.birthDate ? (
                 <p
                   id="birth-date-error"
+                  role="alert"
                   className="text-destructive flex items-center gap-1.5 text-xs font-medium"
                 >
                   <AlertCircle className="size-3.5 shrink-0" aria-hidden />
@@ -123,9 +124,9 @@ export function BirthForm({
               <div
                 className={cn(
                   fieldBase,
-                  unknownTime && 'bg-muted border-border/70',
+                  unknownTime && 'bg-muted/70 border-border/70 cursor-not-allowed',
                   errors.birthTime
-                    ? 'border-destructive/60 bg-destructive/5'
+                    ? 'border-destructive/60 bg-destructive/5 ring-destructive/20 ring-4'
                     : !unknownTime && 'border-input hover:border-primary/45',
                 )}
               >
@@ -137,13 +138,13 @@ export function BirthForm({
                   aria-invalid={Boolean(errors.birthTime)}
                   aria-describedby={errors.birthTime ? 'birth-time-error' : 'birth-time-hint'}
                   onChange={(event) => onBirthTimeChange(event.target.value)}
-                  className={cn(hiddenInput, unknownTime && 'pointer-events-none')}
+                  className={cn(hiddenInput, unknownTime && 'pointer-events-none cursor-not-allowed')}
                 />
                 <span
                   className={cn(
                     'text-base',
                     unknownTime
-                      ? 'text-muted-foreground/70 line-through'
+                      ? 'text-muted-foreground/60 line-through'
                       : birthTime
                         ? 'font-medium'
                         : 'text-muted-foreground',
@@ -160,7 +161,7 @@ export function BirthForm({
                   className={cn(
                     'size-5',
                     unknownTime
-                      ? 'text-muted-foreground/50'
+                      ? 'text-muted-foreground/40'
                       : birthTime
                         ? 'text-primary'
                         : 'text-muted-foreground',
@@ -171,6 +172,7 @@ export function BirthForm({
               {errors.birthTime ? (
                 <p
                   id="birth-time-error"
+                  role="alert"
                   className="text-destructive flex items-start gap-1.5 text-xs font-medium"
                 >
                   <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -179,7 +181,7 @@ export function BirthForm({
               ) : (
                 <p id="birth-time-hint" className="text-muted-foreground text-xs">
                   {unknownTime
-                    ? '시간 없이 띠와 별자리를 중심으로 분석해요'
+                    ? '시간 없이 띠와 별자리 중심으로 간략 분석해요'
                     : '태어난 시간을 알면 더 정확하게 분석할 수 있어요'}
                 </p>
               )}
@@ -209,7 +211,7 @@ export function BirthForm({
                   checked={unknownTime}
                   onChange={(event) => onUnknownTimeChange(event.target.checked)}
                 />
-                <span className="text-sm font-medium">태어난 시간을 몰라요</span>
+                <span className="text-sm font-medium">태어난 시간 모름</span>
               </label>
             </div>
           </div>
