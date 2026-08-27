@@ -15,7 +15,7 @@ interface CompactPayload {
   tr: [string, string][] // traits [[title, desc], ...]
   dt: [string, string, string][] // details [[emoji, title, desc], ...]
   ol: string // oneLiner
-  to: [number, number, string, string[]] // today [score, max, message, keywords]
+  to: [number, number, string, string[], string?] // today [score, max, message, keywords, action]
 }
 
 /**
@@ -79,6 +79,7 @@ export function encodeSharePayload(
         result.today.max || 5,
         result.today.message,
         result.today.keywords || [],
+        result.today.action,
       ],
     }
 
@@ -144,6 +145,7 @@ export function decodeSharePayload(encoded: string): {
         max: 5,
         message: compact.to[2] || '오늘 하루도 행복한 시간 보내세요.',
         keywords: Array.isArray(compact.to[3]) ? compact.to[3] : [],
+        action: compact.to[4] || '미뤄둔 작은 일 하나를 10분만 시작해보세요.',
       },
     }
 
@@ -166,7 +168,8 @@ export function buildShareUrl(encodedPayload: string): string {
   if (typeof window === 'undefined') return ''
   const origin = window.location.origin
   const pathname = window.location.pathname
-  return `${origin}${pathname}?res=${encodedPayload}`
+  const url = `${origin}${pathname}?res=${encodedPayload}`
+  return url.length <= 2000 ? url : ''
 }
 
 /**
@@ -196,5 +199,8 @@ ${traits}
 
 [⭐ 오늘의 운세 (${stars} ${result.today.score}/5점)]
 ${result.today.message}
+
+[✅ 오늘의 작은 실천]
+${result.today.action}
 `
 }

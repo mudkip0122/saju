@@ -33,6 +33,7 @@ export default function Page() {
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const shareFailureCountRef = useRef(0)
   const resultRef = useRef<HTMLDivElement>(null)
 
   function showToast(tone: 'success' | 'error', message: string) {
@@ -250,6 +251,7 @@ export default function Page() {
       }
 
       const data: FortuneResult = await response.json()
+      shareFailureCountRef.current = 0
       setResult(data)
       setStatus('done')
       requestAnimationFrame(() => {
@@ -276,35 +278,42 @@ export default function Page() {
   }
 
   // F-02, E-16, E-17: 3단계 Fallback 공유 시스템
+  async function handleShareLinkFailure() {
+    shareFailureCountRef.current += 1
+    if (shareFailureCountRef.current === 1) {
+      showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      return
+    }
+
+    if (!result) return
+    try {
+      const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+      await navigator.clipboard.writeText(textSummary)
+      showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+    } catch {
+      showToast('error', '결과를 복사하지 못했습니다. 직접 선택해 복사해주세요.')
+    }
+  }
+
   async function handleShare() {
     if (!result) return
 
     if (simulateShareFailure) {
-      // 1차 실패 시 텍스트 복사 Fallback 제공
-      try {
-        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
-        await navigator.clipboard.writeText(textSummary)
-        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
-      } catch {
-        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
-      }
+      await handleShareLinkFailure()
       return
     }
 
     const payload = encodeSharePayload(result, { birthDate, birthTime, unknownTime })
     if (!payload) {
-      // 인코딩 실패 시 텍스트 요약 복사 Fallback
-      try {
-        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
-        await navigator.clipboard.writeText(textSummary)
-        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
-      } catch {
-        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
-      }
+      await handleShareLinkFailure()
       return
     }
 
     const shareUrl = buildShareUrl(payload)
+    if (!shareUrl) {
+      await handleShareLinkFailure()
+      return
+    }
     const shareTitle = `[오늘의 사주] 나는 "${result.typeName}"`
     const shareText = `[오늘의 사주] 나는 "${result.typeName}" — 오늘의 운세 ${result.today.score}/${result.today.max}\n`
 
@@ -316,6 +325,7 @@ export default function Page() {
           text: shareText,
           url: shareUrl,
         })
+        shareFailureCountRef.current = 0
         return
       } catch (err: any) {
         // 사용자가 취소한 경우는 무시
@@ -326,6 +336,7 @@ export default function Page() {
     // 2단계: 클립보드 URL 복사 (E-17)
     try {
       await navigator.clipboard.writeText(shareUrl)
+      shareFailureCountRef.current = 0
       showToast('success', '공유 링크가 복사되었습니다.')
     } catch {
       // 3단계: 텍스트 전문 복사 (E-16 2차 Fallback)
@@ -344,21 +355,20 @@ export default function Page() {
     if (!result) return
 
     if (simulateShareFailure) {
-      try {
-        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
-        await navigator.clipboard.writeText(textSummary)
-        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
-      } catch {
-        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
-      }
+      await handleShareLinkFailure()
       return
     }
 
     const payload = encodeSharePayload(result, { birthDate, birthTime, unknownTime })
-    const shareUrl = payload ? buildShareUrl(payload) : window.location.href
+    const shareUrl = payload ? buildShareUrl(payload) : ''
+    if (!shareUrl) {
+      await handleShareLinkFailure()
+      return
+    }
 
     try {
       await navigator.clipboard.writeText(shareUrl)
+      shareFailureCountRef.current = 0
       showToast('success', '공유 링크가 복사되었습니다.')
     } catch {
       try {
@@ -389,6 +399,7 @@ export default function Page() {
     setErrorMessage('')
     setResult(null)
     setToast(null)
+    shareFailureCountRef.current = 0
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 

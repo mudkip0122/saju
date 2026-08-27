@@ -33,6 +33,7 @@ export const todayFortuneSchema = z.object({
   max: z.number().default(5),
   message: z.string().min(1, '오늘의 운세 코멘트는 필수입니다.'),
   keywords: z.array(z.string()).default([]),
+  action: z.string().default('미뤄둔 작은 일 하나를 10분만 시작해보세요.'),
 })
 
 export const fortuneResponseSchema = z.object({
@@ -199,6 +200,11 @@ export function sanitizeFortuneResult(
     keywords = ['행운의 흐름', '마음의 여유', '작은 도전']
   }
 
+  const action =
+    typeof raw?.today?.action === 'string' && raw.today.action.trim()
+      ? raw.today.action.trim()
+      : '미뤄둔 작은 일 하나를 10분만 시작해보세요.'
+
   return {
     typeName,
     typeDescription,
@@ -212,6 +218,7 @@ export function sanitizeFortuneResult(
       max: 5,
       message,
       keywords,
+      action,
     },
   }
 }

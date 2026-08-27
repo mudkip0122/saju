@@ -180,6 +180,10 @@ export function ResultSection({
       <div className="animate-rise-in" style={{ animationDelay: '320ms' }}>
         <ShareCard onShare={onShare} onCopy={onCopy} />
       </div>
+
+      <p className="text-muted-foreground px-2 text-center text-xs leading-relaxed">
+        이 결과는 오락과 자기이해를 위한 참고 자료이며 의료·법률·재무 판단을 대신하지 않습니다.
+      </p>
     </div>
   )
 }

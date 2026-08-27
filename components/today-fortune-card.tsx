@@ -51,6 +51,11 @@ export function TodayFortuneCard({ today }: { today: FortuneResult['today'] }) {
           </li>
         ))}
       </ul>
+
+      <div className="border-primary/20 bg-card/70 mt-5 rounded-2xl border p-4">
+        <p className="text-primary text-xs font-bold">오늘의 작은 실천</p>
+        <p className="mt-1.5 text-sm leading-relaxed font-medium">{today.action}</p>
+      </div>
     </section>
   )
 }

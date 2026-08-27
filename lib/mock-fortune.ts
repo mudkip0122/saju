@@ -11,6 +11,7 @@ export type FortuneResult = {
     max: number
     message: string
     keywords: string[]
+    action: string
   }
 }
 
@@ -53,6 +54,7 @@ export const MOCK_RESULT: FortuneResult = {
     message:
       '새로운 시도를 시작하기 좋은 날이에요. 평소 미뤄두었던 일을 하나 꺼내보세요.',
     keywords: ['새로운 시작', '작은 실행', '기록'],
+    action: '미뤄둔 일 하나를 10분만 시작해보세요.',
   },
 }
 

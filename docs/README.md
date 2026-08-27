@@ -14,6 +14,8 @@
 | **Sprint 2** | AI 사주 분석 API 파이프라인, 스키마 검증 & 장애 복구 | [Sprint 2 상세 계획서](./sprints/sprint-2-ai-analysis-pipeline.md) |
 | **Sprint 3** | DB-less 무저장 URL 인코딩 공유 엔진 & Fallback 체계 | [Sprint 3 상세 계획서](./sprints/sprint-3-sharing-and-link-engine.md) |
 | **Sprint 4** | UI/UX 완성도, 단일 화면 상태 머신 최적화, E2E 검증 & 출시 | [Sprint 4 상세 계획서](./sprints/sprint-4-ui-ux-polish-and-qa.md) |
+| **AI 서비스 개선 계획** | Gemini 연결 안정화, 품질 평가, 관측성, 보안·비용 관리 로드맵 | [Gemini 기반 AI 서비스 개선 계획](./ai-service-improvement-plan.md) |
+| **AI 운영·보안 가이드** | Secret 교체, 관측 지표, 장애·비용 경보 및 운영 절차 | [AI 운영·보안 가이드](./ai-operations.md) |
 
 ---
 
