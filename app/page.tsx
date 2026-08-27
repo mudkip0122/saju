@@ -61,6 +61,13 @@ export default function Page() {
     }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [])
+
   // E-10: 오프라인 이벤트 감지
   useEffect(() => {
     function handleOffline() {
@@ -171,6 +178,10 @@ export default function Page() {
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       setStatus('idle')
+      requestAnimationFrame(() => {
+        const firstInvalidField = document.querySelector<HTMLElement>('[aria-invalid="true"]')
+        firstInvalidField?.focus()
+      })
       return
     }
 

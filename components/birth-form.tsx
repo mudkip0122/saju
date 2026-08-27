@@ -211,6 +211,7 @@ export function BirthForm({
                   type="checkbox"
                   className="sr-only"
                   checked={unknownTime}
+                  aria-describedby="birth-time-hint"
                   onChange={(event) => onUnknownTimeChange(event.target.checked)}
                 />
                 <span className="text-sm font-medium">태어난 시간 모름</span>
