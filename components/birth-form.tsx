@@ -14,6 +14,7 @@ type Props = {
   isLoading: boolean
   isDone: boolean
   analysisFailed: boolean
+  errorMessage?: string
   onBirthDateChange: (value: string) => void
   onBirthTimeChange: (value: string) => void
   onUnknownTimeChange: (value: boolean) => void
@@ -28,6 +29,7 @@ export function BirthForm({
   isLoading,
   isDone,
   analysisFailed,
+  errorMessage,
   onBirthDateChange,
   onBirthTimeChange,
   onUnknownTimeChange,
@@ -259,7 +261,9 @@ export function BirthForm({
           >
             <AlertCircle className="text-destructive mt-0.5 size-5 shrink-0" aria-hidden />
             <div className="flex-1">
-              <p className="text-sm font-bold">분석에 실패했습니다. 다시 시도해주세요.</p>
+              <p className="text-sm font-bold">
+                {errorMessage || '분석에 실패했습니다. 다시 시도해주세요.'}
+              </p>
               <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                 입력한 생년정보는 그대로 유지되어 있어요.
               </p>

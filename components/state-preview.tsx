@@ -4,8 +4,10 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   simulateFailure: boolean
+  simulateTimeout: boolean
   simulateShareFailure: boolean
   onToggleFailure: (value: boolean) => void
+  onToggleTimeout: (value: boolean) => void
   onToggleShareFailure: (value: boolean) => void
   onFillMockInput: () => void
   onUnknownTime: () => void
@@ -14,8 +16,10 @@ type Props = {
 
 export function StatePreview({
   simulateFailure,
+  simulateTimeout,
   simulateShareFailure,
   onToggleFailure,
+  onToggleTimeout,
   onToggleShareFailure,
   onFillMockInput,
   onUnknownTime,
@@ -70,6 +74,19 @@ export function StatePreview({
           )}
         >
           분석 실패 {simulateFailure ? 'ON' : 'OFF'}
+        </button>
+        <button
+          type="button"
+          aria-pressed={simulateTimeout}
+          onClick={() => onToggleTimeout(!simulateTimeout)}
+          className={cn(
+            chip,
+            simulateTimeout
+              ? 'border-amber-500/45 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+              : 'border-input hover:border-primary/45 hover:bg-accent/50',
+          )}
+        >
+          10초 타임아웃 {simulateTimeout ? 'ON' : 'OFF'}
         </button>
         <button
           type="button"

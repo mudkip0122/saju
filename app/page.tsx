@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnalyzingCard } from '@/components/analyzing-card'
 import { BirthForm, type FormErrors } from '@/components/birth-form'
 import { HeroSection } from '@/components/hero-section'
@@ -9,7 +9,6 @@ import { Starfield } from '@/components/starfield'
 import { StatePreview } from '@/components/state-preview'
 import { ToastView, type ToastState } from '@/components/toast-view'
 import { MOCK_INPUT, MOCK_RESULT, type FortuneResult } from '@/lib/mock-fortune'
-import { analyzeBirthInfo } from '@/lib/saju-calculator'
 
 type Status = 'idle' | 'loading' | 'done' | 'failed'
 
@@ -19,12 +18,14 @@ export default function Page() {
   const [unknownTime, setUnknownTime] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const [status, setStatus] = useState<Status>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
   const [result, setResult] = useState<FortuneResult | null>(null)
   const [toast, setToast] = useState<ToastState>(null)
   const [simulateFailure, setSimulateFailure] = useState(false)
+  const [simulateTimeout, setSimulateTimeout] = useState(false)
   const [simulateShareFailure, setSimulateShareFailure] = useState(false)
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
 
@@ -33,6 +34,22 @@ export default function Page() {
     setToast({ id: Date.now(), tone, message })
     toastTimerRef.current = setTimeout(() => setToast(null), 3200)
   }
+
+  // E-10: 오프라인 이벤트 감지
+  useEffect(() => {
+    function handleOffline() {
+      showToast('error', '인터넷 연결을 확인한 후 다시 시도해주세요.')
+    }
+    function handleOnline() {
+      showToast('success', '인터넷에 다시 연결되었습니다.')
+    }
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [])
 
   // E-01 ~ E-05 엄격한 유효성 검증
   function validate(): FormErrors {
@@ -87,6 +104,7 @@ export default function Page() {
   function invalidatePreviousResult() {
     if (status === 'done' || status === 'failed') {
       setStatus('idle')
+      setErrorMessage('')
       setResult(null)
     }
   }
@@ -115,7 +133,10 @@ export default function Page() {
     invalidatePreviousResult()
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    // E-07: 분석 진행 중 중복 클릭 및 요청 차단
+    if (status === 'loading') return
+
     const nextErrors = validate()
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
@@ -123,37 +144,94 @@ export default function Page() {
       return
     }
 
-    if (timerRef.current) clearTimeout(timerRef.current)
+    // E-10: 오프라인 상태 사전 체크
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const msg = '인터넷 연결을 확인한 후 다시 시도해주세요.'
+      setErrorMessage(msg)
+      showToast('error', msg)
+      setStatus('failed')
+      return
+    }
+
     setStatus('loading')
+    setErrorMessage('')
 
-    // Task 1.1 사주 계산 엔진 연동
-    const calculated = analyzeBirthInfo(birthDate, birthTime, unknownTime)
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-    timerRef.current = setTimeout(() => {
+    // E-08: 10초 클라이언트 타임아웃 제한
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+    }, 10000)
+
+    try {
+      if (simulateTimeout) {
+        // 10.5초 대기 후 타임아웃 시뮬레이션
+        await new Promise((_, reject) => {
+          setTimeout(() => {
+            const err = new Error('The user aborted a request.')
+            err.name = 'AbortError'
+            reject(err)
+          }, 10200)
+        })
+      }
+
       if (simulateFailure) {
-        setStatus('failed')
-        return
+        // 즉시 실패 시뮬레이션
+        await new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Simulated failure')), 1000)
+        })
       }
 
-      // 띠와 별자리 동적 주입
-      const dynamicResult: FortuneResult = {
-        ...MOCK_RESULT,
-        zodiacAnimal: {
-          emoji: calculated.zodiacAnimal.emoji,
-          label: calculated.zodiacAnimal.label,
-        },
-        starSign: {
-          emoji: calculated.starSign.emoji,
-          label: calculated.starSign.label,
-        },
+      const response = await fetch('/api/fortune', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate,
+          birthTime: unknownTime ? undefined : birthTime,
+          unknownTime,
+        }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const errorMsg =
+          response.status === 504
+            ? '분석 시간이 길어지고 있어요. 잠시 후 다시 시도해주세요.' // E-08
+            : errorData.error || '분석에 실패했습니다. 다시 시도해주세요.' // E-09
+        throw new Error(errorMsg)
       }
 
-      setResult(dynamicResult)
+      const data: FortuneResult = await response.json()
+      setResult(data)
       setStatus('done')
       requestAnimationFrame(() => {
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
-    }, 1200)
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      let msg = '분석에 실패했습니다. 다시 시도해주세요.' // E-09
+
+      if (err.name === 'AbortError') {
+        msg = '분석 시간이 길어지고 있어요. 잠시 후 다시 시도해주세요.' // E-08
+      } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        msg = '인터넷 연결을 확인한 후 다시 시도해주세요.' // E-10
+      } else if (err.message) {
+        msg = err.message
+      }
+
+      setErrorMessage(msg)
+      setStatus('failed')
+      showToast('error', msg)
+    } finally {
+      abortControllerRef.current = null
+    }
   }
 
   async function handleShare() {
@@ -196,12 +274,13 @@ export default function Page() {
   }
 
   function reset() {
-    if (timerRef.current) clearTimeout(timerRef.current)
+    if (abortControllerRef.current) abortControllerRef.current.abort()
     setBirthDate('')
     setBirthTime('')
     setUnknownTime(false)
     setErrors({})
     setStatus('idle')
+    setErrorMessage('')
     setResult(null)
     setToast(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -222,6 +301,7 @@ export default function Page() {
           isLoading={status === 'loading'}
           isDone={status === 'done'}
           analysisFailed={status === 'failed'}
+          errorMessage={errorMessage}
           onBirthDateChange={handleBirthDateChange}
           onBirthTimeChange={handleBirthTimeChange}
           onUnknownTimeChange={handleUnknownTimeChange}
@@ -245,8 +325,10 @@ export default function Page() {
 
         <StatePreview
           simulateFailure={simulateFailure}
+          simulateTimeout={simulateTimeout}
           simulateShareFailure={simulateShareFailure}
           onToggleFailure={setSimulateFailure}
+          onToggleTimeout={setSimulateTimeout}
           onToggleShareFailure={setSimulateShareFailure}
           onFillMockInput={fillMockInput}
           onUnknownTime={() => {
