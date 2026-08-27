@@ -15,3 +15,5 @@ node_modules
 !.env.example
 .next/
 .DS_Store
+
+.vercel
