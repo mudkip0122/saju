@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnalyzingCard } from '@/components/analyzing-card'
 import { BirthForm, type FormErrors } from '@/components/birth-form'
-import { HeroSection } from '@/components/hero-section'
+import { LandingFooter, LandingHero, HowItWorks, ResultPreview, TrustAndFaq } from '@/components/landing-sections'
+import { LandingNav } from '@/components/landing-nav'
 import { ResultSection } from '@/components/result-section'
 import { Starfield } from '@/components/starfield'
 import { StatePreview } from '@/components/state-preview'
@@ -404,11 +405,22 @@ export default function Page() {
   }
 
   return (
-    <main className="aurora-bg relative min-h-screen">
+    <main id="top" className="aurora-bg relative min-h-screen">
       <Starfield />
 
-      <div className="relative mx-auto w-full max-w-[46rem] px-5 pb-24 sm:px-6">
-        <HeroSection />
+      <div className="relative mx-auto w-full max-w-[72rem] px-4 pb-12 sm:px-6">
+        <LandingNav />
+        <LandingHero />
+        <HowItWorks />
+        <ResultPreview />
+        <TrustAndFaq />
+
+        <section id="analysis-form" className="mx-auto max-w-[46rem] scroll-mt-24 pt-20 sm:pt-28" aria-labelledby="analysis-title">
+          <div className="mb-6 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#6b38d4]">Start your reading</p>
+            <h2 id="analysis-title" className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[#121c2a] sm:text-4xl">이제, 나의 흐름을 만나보세요.</h2>
+            <p className="mt-3 text-sm leading-6 text-[#666d7a]">생년월일을 입력하면 AI가 나만의 운세를 읽어드려요.</p>
+          </div>
 
         <BirthForm
           birthDate={birthDate}
@@ -424,6 +436,7 @@ export default function Page() {
           onUnknownTimeChange={handleUnknownTimeChange}
           onSubmit={handleSubmit}
         />
+        </section>
 
         {status === 'loading' && <AnalyzingCard />}
 
@@ -454,6 +467,7 @@ export default function Page() {
           }}
           onReset={reset}
         />
+        <LandingFooter />
       </div>
 
       <ToastView toast={toast} onClose={() => setToast(null)} />

@@ -37,10 +37,9 @@
 :root {
   color-scheme: light;
 
-  /* cream white */
-  --background: oklch(0.985 0.009 300);
-  /* deep ink violet */
-  --foreground: oklch(0.29 0.045 288);
+  /* Astra Destiny design system */
+  --background: #f8f9ff;
+  --foreground: #1a1a1a;
 
   --card: oklch(1 0.003 300);
   --card-foreground: var(--foreground);
@@ -51,15 +50,15 @@
   --primary: oklch(0.6 0.155 295);
   --primary-foreground: oklch(0.99 0.005 300);
 
-  --secondary: oklch(0.955 0.018 300);
-  --secondary-foreground: oklch(0.4 0.07 292);
+  --secondary: #eff3ff;
+  --secondary-foreground: #4d3a83;
 
   --muted: oklch(0.965 0.012 300);
-  --muted-foreground: oklch(0.55 0.035 292);
+  --muted-foreground: #666666;
 
   /* pale lavender */
-  --accent: oklch(0.93 0.035 300);
-  --accent-foreground: oklch(0.38 0.09 292);
+  --accent: #eff3ff;
+  --accent-foreground: #6b38d4;
 
   --destructive: oklch(0.62 0.12 18);
   --destructive-foreground: oklch(0.99 0.005 300);
@@ -80,12 +79,28 @@
     -webkit-font-smoothing: antialiased;
     word-break: keep-all;
     overflow-wrap: break-word;
+    min-width: 320px;
   }
   ::selection {
     background: var(--accent);
     color: var(--accent-foreground);
   }
 }
+
+html { scroll-behavior: smooth; }
+.hero-gradient-text { background: linear-gradient(110deg, #6b38d4 5%, #875ae4 50%, #4c63c7 95%); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.glass-card { border: 1px solid rgb(255 255 255 / 0.84); background: rgb(255 255 255 / 0.62); box-shadow: 0 18px 46px -34px rgb(57 30 110 / 0.5); backdrop-filter: blur(16px); }
+.eyebrow { text-align: center; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #6b38d4; }
+.section-title { margin-top: 0.75rem; text-align: center; font-size: clamp(1.75rem, 4vw, 2.35rem); font-weight: 700; line-height: 1.3; letter-spacing: -0.035em; color: #121c2a; }
+.section-copy { margin: 1rem auto 0; max-width: 38rem; text-align: center; font-size: 0.9rem; line-height: 1.8; color: #666d7a; }
+.celestial-orbit { pointer-events: none; position: absolute; left: 50%; top: 50%; border-radius: 9999px; border: 1px solid rgb(107 56 212 / 0.12); transform: translate(-50%, -50%) rotate(-12deg); }
+.celestial-orbit-one { width: min(86vw, 46rem); height: min(47vw, 23rem); box-shadow: 0 0 110px 40px rgb(208 188 255 / 0.14); }
+.celestial-orbit-two { width: min(64vw, 34rem); height: min(68vw, 34rem); transform: translate(-50%, -50%) rotate(42deg); }
+.faq-item { border: 1px solid rgb(255 255 255 / 0.86); border-radius: 1rem; background: rgb(255 255 255 / 0.7); padding: 1rem 1.1rem; }
+.faq-item summary { display: flex; min-height: 2rem; cursor: pointer; list-style: none; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.875rem; font-weight: 700; color: #242936; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item p { margin-top: 0.75rem; font-size: 0.8rem; line-height: 1.65; color: #666d7a; }
+@media (max-width: 639px) { .glass-card { background: rgb(255 255 255 / 0.88); backdrop-filter: blur(8px); } .celestial-orbit-one { width: 38rem; height: 19rem; } .celestial-orbit-two { width: 26rem; height: 26rem; } }
 
 @utility aurora-bg {
   background-image:

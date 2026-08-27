@@ -23,7 +23,13 @@ interface CompactPayload {
  */
 function utf8ToBase64Url(str: string): string {
   if (typeof Buffer !== 'undefined') {
-    return Buffer.from(str, 'utf8').toString('base64url')
+    // `base64url` is not supported by every browser Buffer polyfill.
+    // Encode as regular Base64 first, then apply the URL-safe alphabet.
+    return Buffer.from(str, 'utf8')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
   }
   const bytes = new TextEncoder().encode(str)
   let bin = ''

@@ -18,10 +18,24 @@ const gowunBatang = Gowun_Batang({
 })
 
 export const metadata: Metadata = {
-  title: '오늘의 사주 · 생년정보로 알아보는 나의 성향과 오늘의 운세',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  title: 'Astra Destiny · AI 운세 분석',
   description:
-    '띠 · 별자리 · 사주를 AI가 한 번에 분석해 나의 성향과 오늘의 운세를 알려드려요.',
-  generator: 'v0.app',
+    '고대 사주의 지혜와 AI의 섬세한 분석으로 나만의 성향과 오늘을 위한 방향을 발견해보세요.',
+  applicationName: 'Astra Destiny',
+  openGraph: {
+    title: 'Astra Destiny · AI 운세 분석',
+    description: '우주의 데이터로 읽는 당신의 운명. 회원가입 없이 나만의 오늘을 만나보세요.',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Astra Destiny — 우주의 데이터로 읽는 당신의 운명' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Astra Destiny · AI 운세 분석',
+    description: '우주의 데이터로 읽는 당신의 운명.',
+    images: ['/og.png'],
+  },
   icons: {
     icon: [
       {
@@ -43,7 +57,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#f7f4fb',
+  themeColor: '#f8f9ff',
 }
 
 export default function RootLayout({
