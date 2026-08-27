@@ -9,6 +9,12 @@ import { Starfield } from '@/components/starfield'
 import { StatePreview } from '@/components/state-preview'
 import { ToastView, type ToastState } from '@/components/toast-view'
 import { MOCK_INPUT, MOCK_RESULT, type FortuneResult } from '@/lib/mock-fortune'
+import {
+  buildShareUrl,
+  decodeSharePayload,
+  encodeSharePayload,
+  formatShareText,
+} from '@/lib/share-codec'
 
 type Status = 'idle' | 'loading' | 'done' | 'failed'
 
@@ -34,6 +40,26 @@ export default function Page() {
     setToast({ id: Date.now(), tone, message })
     toastTimerRef.current = setTimeout(() => setToast(null), 3200)
   }
+
+  // 공유 URL 파라미터(?res=...) 감지 및 결과 자동 복원 (Hydration)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const searchParams = new URLSearchParams(window.location.search)
+    const resParam = searchParams.get('res')
+    if (resParam) {
+      const hydrated = decodeSharePayload(resParam)
+      if (hydrated) {
+        setBirthDate(hydrated.birthDate)
+        setBirthTime(hydrated.birthTime)
+        setUnknownTime(hydrated.unknownTime)
+        setResult(hydrated.result)
+        setStatus('done')
+        requestAnimationFrame(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+      }
+    }
+  }, [])
 
   // E-10: 오프라인 이벤트 감지
   useEffect(() => {
@@ -106,6 +132,10 @@ export default function Page() {
       setStatus('idle')
       setErrorMessage('')
       setResult(null)
+      // 브라우저 주소창의 공유 쿼리 파라미터도 정리
+      if (typeof window !== 'undefined' && window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname)
+      }
     }
   }
 
@@ -234,34 +264,99 @@ export default function Page() {
     }
   }
 
+  // F-02, E-16, E-17: 3단계 Fallback 공유 시스템
   async function handleShare() {
-    const shareText = `[오늘의 사주] 나는 "${result?.typeName || MOCK_RESULT.typeName}" — 오늘의 운세 ${result?.today.score || MOCK_RESULT.today.score}/${result?.today.max || MOCK_RESULT.today.max}`
+    if (!result) return
+
     if (simulateShareFailure) {
-      showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      // 1차 실패 시 텍스트 복사 Fallback 제공
+      try {
+        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+        await navigator.clipboard.writeText(textSummary)
+        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+      } catch {
+        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      }
       return
     }
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: '오늘의 사주', text: shareText })
-        return
+
+    const payload = encodeSharePayload(result, { birthDate, birthTime, unknownTime })
+    if (!payload) {
+      // 인코딩 실패 시 텍스트 요약 복사 Fallback
+      try {
+        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+        await navigator.clipboard.writeText(textSummary)
+        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+      } catch {
+        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
       }
-      await navigator.clipboard.writeText(`${shareText}\n${window.location.href}`)
+      return
+    }
+
+    const shareUrl = buildShareUrl(payload)
+    const shareTitle = `[오늘의 사주] 나는 "${result.typeName}"`
+    const shareText = `[오늘의 사주] 나는 "${result.typeName}" — 오늘의 운세 ${result.today.score}/${result.today.max}\n`
+
+    // 1단계: 모바일 Web Share API
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        })
+        return
+      } catch (err: any) {
+        // 사용자가 취소한 경우는 무시
+        if (err.name === 'AbortError') return
+      }
+    }
+
+    // 2단계: 클립보드 URL 복사 (E-17)
+    try {
+      await navigator.clipboard.writeText(shareUrl)
       showToast('success', '공유 링크가 복사되었습니다.')
     } catch {
-      showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      // 3단계: 텍스트 전문 복사 (E-16 2차 Fallback)
+      try {
+        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+        await navigator.clipboard.writeText(textSummary)
+        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+      } catch {
+        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      }
     }
   }
 
+  // 링크 복사 전용 핸들러
   async function handleCopy() {
+    if (!result) return
+
     if (simulateShareFailure) {
-      showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      try {
+        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+        await navigator.clipboard.writeText(textSummary)
+        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+      } catch {
+        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      }
       return
     }
+
+    const payload = encodeSharePayload(result, { birthDate, birthTime, unknownTime })
+    const shareUrl = payload ? buildShareUrl(payload) : window.location.href
+
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(shareUrl)
       showToast('success', '공유 링크가 복사되었습니다.')
     } catch {
-      showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      try {
+        const textSummary = formatShareText(result, { birthDate, birthTime, unknownTime })
+        await navigator.clipboard.writeText(textSummary)
+        showToast('error', '공유 링크를 만들 수 없습니다. 결과를 복사해서 공유해주세요.')
+      } catch {
+        showToast('error', '공유 링크를 만들지 못했습니다. 다시 시도해주세요.')
+      }
     }
   }
 
